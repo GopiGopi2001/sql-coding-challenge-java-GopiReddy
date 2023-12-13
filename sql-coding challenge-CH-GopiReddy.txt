@@ -1,0 +1,299 @@
+                                                       Coding Challenges: CareerHub, The Job Board
+
+
+Tasks:
+1) Provide a SQL script that initializes the database for the Job Board scenario “CareerHub”.
+
+Ans:- create database CareerHub;
+
+      use CareerHub;
+===========================================================================================================
+
+2) Create tables for Companies, Jobs, Applicants and Applications.
+ 
+Ans:-
+
+Companies table: 
+
+CREATE TABLE IF NOT EXISTS Companies (
+    CompanyID INT PRIMARY KEY,
+    CompanyName VARCHAR(255),
+    Location VARCHAR(255)
+);
+
+Jobs table:
+
+CREATE TABLE IF NOT EXISTS  Jobs (
+    JobID INT PRIMARY KEY,
+    CompanyID INT,
+    JobTitle VARCHAR(255),
+    JobDescription TEXT,
+    JobLocation VARCHAR(255),
+    Salary DECIMAL,
+    JobType VARCHAR(50),
+    PostedDate DATETIME,
+    FOREIGN KEY (CompanyID) REFERENCES Companies(CompanyID)
+);
+
+
+Applicants table:
+
+
+CREATE TABLE IF NOT EXISTS Applicants (
+    ApplicantID INT PRIMARY KEY,
+    FirstName VARCHAR(255),
+    LastName VARCHAR(255),
+    Email VARCHAR(255),
+    Phone VARCHAR(20),
+    Resume TEXT
+);
+
+
+Applications table:
+
+CREATE TABLE IF NOT EXISTS Applications (
+    ApplicationID INT PRIMARY KEY,
+    JobID INT,
+    ApplicantID INT,
+    ApplicationDate DATETIME,
+    CoverLetter TEXT,
+    FOREIGN KEY (JobID) REFERENCES Jobs(JobID),
+    FOREIGN KEY (ApplicantID) REFERENCES Applicants(ApplicantID)
+);
+
+==============================================================================================================
+3) Define appropriate primary keys, foreign keys, and constraints.
+
+Ans:-
+
+Already created in tables
+
+
+===============================================================================================================================================
+
+4) Ensure the script handles potential errors, such as if the database or tables already exist.
+
+Ans:-
+
+CREATE TABLE IF NOT EXISTS Companies();
+
+CREATE TABLE IF NOT EXISTS  Jobs();
+
+CREATE TABLE IF NOT EXISTS Applicants();
+
+CREATE TABLE IF NOT EXISTS Applications ();
+
+=======================================================================================================================
+
+5. Write an SQL query to count the number of applications received for each job listing in the 
+   "Jobs" table. Display the job title and the corresponding application count. Ensure that it lists all 
+   jobs, even if they have no applications.
+
+Ans:-
+   SELECT Jobs.JobID, Jobs.JobTitle, COUNT(Applications.ApplicationID) AS ApplicationCount
+   FROM Jobs
+   LEFT JOIN Applications ON Jobs.JobID = Applications.JobID
+   GROUP BY Jobs.JobID, Jobs.JobTitle;
+=================================================================================================================
+
+6. Develop an SQL query that retrieves job listings from the "Jobs" table within a specified salary 
+   range. Allow parameters for the minimum and maximum salary values. Display the job title, 
+   company name, location, and salary for each matching job.
+Ans:-
+
+     set @minSalary = 60000.00;
+     set @maxSalary = 90000.00; 
+     SELECT Jobs.JobTitle, Companies.CompanyName, Jobs.JobLocation, Jobs.Salary
+     FROM Jobs
+     INNER JOIN Companies ON Jobs.CompanyID = Companies.CompanyID
+     WHERE Jobs.Salary BETWEEN @minSalary AND @maxSalary;
+===================================================================================================================
+7. Write an SQL query that retrieves the job application history for a specific applicant. Allow a 
+   parameter for the ApplicantID, and return a result set with the job titles, company names, and 
+   application dates for all the jobs the applicant has applied to.
+Ans:-
+
+   SET @ApplicantID = 1;
+   SELECT Jobs.JobTitle, Companies.CompanyName, Applications.ApplicationDate
+   FROM Applications
+   INNER JOIN Jobs ON Applications.JobID = Jobs.JobID
+   INNER JOIN Companies ON Jobs.CompanyID = Companies.CompanyID
+   WHERE Applications.ApplicantID = @ApplicantID;
+===============================================================================================================
+8. Create an SQL query that calculates and displays the average salary offered by all companies for 
+   job listings in the "Jobs" table. Ensure that the query filters out jobs with a salary of zero.
+Ans:-
+ 
+   SELECT AVG(Salary) AS AverageSalary
+   FROM Jobs
+   WHERE Salary > 0;
+==============================================================================================================
+9. Write an SQL query to identify the company that has posted the most job listings. Display the 
+   company name along with the count of job listings they have posted. Handle ties if multiple 
+   companies have the same maximum count.
+Ans:-
+ 
+SELECT Companies.CompanyName, COUNT(*) AS JobCount
+FROM Companies
+JOIN Jobs ON Companies.CompanyID = Jobs.CompanyID
+GROUP BY Companies.CompanyName
+HAVING COUNT(*) = (
+    SELECT MAX(NumJobs)
+    FROM (
+        SELECT COUNT(*) AS NumJobs
+        FROM Jobs
+        GROUP BY CompanyID
+    ) AS JobCounts
+);
+===================================================================================================================
+10. Find the applicants who have applied for positions in companies located in 'CityX' and have at 
+    least 3 years of experience.
+Ans:-
+ 
+ALTER TABLE Applicants
+ADD YearsOfExperience INT;
+
+UPDATE Applicants SET YearsOfExperience = 4  WHERE ApplicantID = 1; 
+UPDATE Applicants SET YearsOfExperience = 1  WHERE ApplicantID = 2; 
+UPDATE Applicants SET YearsOfExperience = 2  WHERE ApplicantID = 3; 
+UPDATE Applicants SET YearsOfExperience = 3  WHERE ApplicantID = 4; 
+UPDATE Applicants SET YearsOfExperience = 5  WHERE ApplicantID = 5; 
+
+
+SELECT DISTINCT Applicants.FirstName, Applicants.LastName
+FROM Applicants
+JOIN Applications ON Applicants.ApplicantID = Applications.ApplicantID
+JOIN Jobs ON Applications.JobID = Jobs.JobID
+JOIN Companies ON Jobs.CompanyID = Companies.CompanyID
+WHERE Companies.Location = 'Chicago'
+AND Applicants.YearsOfExperience >= 3;
+
+=============================================================================================================================
+11. Retrieve a list of distinct job titles with salaries between $60,000 and $80,000.
+Ans:-
+
+SELECT DISTINCT JobTitle
+FROM Jobs
+WHERE Salary BETWEEN 60000 AND 80000;
+=============================================================================================================================
+12. Find the jobs that have not received any applications.
+Ans:-
+
+SELECT Jobs.JobID, Jobs.JobTitle
+FROM Jobs
+LEFT JOIN Applications ON Jobs.JobID = Applications.JobID
+WHERE Applications.JobID IS NULL;
+=============================================================================================================================
+13. Retrieve a list of job applicants along with the companies they have applied to and the positions 
+    they have applied for.
+Ans:-
+
+SELECT Applicants.FirstName, Applicants.LastName, Companies.CompanyName, Jobs.JobTitle
+FROM Applicants
+JOIN Applications ON Applicants.ApplicantID = Applications.ApplicantID
+JOIN Jobs ON Applications.JobID = Jobs.JobID
+JOIN Companies ON Jobs.CompanyID = Companies.CompanyID;
+=============================================================================================================================
+14. Retrieve a list of companies along with the count of jobs they have posted, even if they have not 
+    received any applications.
+Ans:-
+
+SELECT Companies.CompanyName, COUNT(Jobs.JobID) AS JobCount
+FROM Companies
+LEFT JOIN Jobs ON Companies.CompanyID = Jobs.CompanyID
+GROUP BY Companies.CompanyName;
+=============================================================================================================================
+15. List all applicants along with the companies and positions they have applied for, including those 
+    who have not applied.
+Ans:-
+
+SELECT 
+    A.FirstName, 
+    A.LastName, 
+    COALESCE(Companies.CompanyName, 'Not Applied') AS CompanyName, 
+    COALESCE(Jobs.JobTitle, 'Not Applied') AS JobTitle
+FROM 
+    Applicants A
+CROSS JOIN 
+    Jobs
+LEFT JOIN 
+    Applications ON A.ApplicantID = Applications.ApplicantID AND Jobs.JobID = Applications.JobID
+LEFT JOIN 
+    Companies ON Jobs.CompanyID = Companies.CompanyID;
+=============================================================================================================================
+16. Find companies that have posted jobs with a salary higher than the average salary of all jobs.
+Ans:-
+
+SELECT DISTINCT Companies.CompanyName
+FROM Companies
+JOIN Jobs ON Companies.CompanyID = Jobs.CompanyID
+WHERE Jobs.Salary > (
+    SELECT AVG(Salary)
+    FROM Jobs
+);
+=============================================================================================================================
+17. Display a list of applicants with their names and a concatenated string of their city and state.
+Ans:-
+
+ALTER TABLE Applicants
+ADD City VARCHAR(100),
+ADD State VARCHAR(100);
+
+UPDATE Applicants SET City = 'New York', State = 'NY' WHERE ApplicantID = 1;
+UPDATE Applicants SET City = 'Los Angeles', State = 'CA' WHERE ApplicantID = 2;
+UPDATE Applicants SET City = 'Chicago', State = 'IL' WHERE ApplicantID = 3;
+UPDATE Applicants SET City = 'Houston', State = 'TX' WHERE ApplicantID = 4;
+UPDATE Applicants SET City = 'Miami', State = 'FL' WHERE ApplicantID = 5;
+
+
+SELECT 
+    CONCAT(Applicants.FirstName, ' ', Applicants.LastName) AS FullName,
+    CONCAT(Applicants.City, ', ', Applicants.State) AS CityState
+FROM Applicants;
+=============================================================================================================================
+18. Retrieve a list of jobs with titles containing either 'Developer' or 'Engineer'.
+Ans:-
+
+SELECT JobID, JobTitle
+FROM Jobs
+WHERE JobTitle LIKE '%Developer%' OR JobTitle LIKE '%Engineer%';
+=============================================================================================================================
+19. Retrieve a list of applicants and the jobs they have applied for, including those who have not 
+    applied and jobs without applicants.
+Ans:-
+
+SELECT 
+    A.FirstName, 
+    A.LastName, 
+    COALESCE(J.JobTitle, 'Not Applied') AS JobTitle
+FROM 
+    Applicants A
+LEFT JOIN 
+    Applications AS AP ON A.ApplicantID = AP.ApplicantID
+LEFT JOIN 
+    Jobs AS J ON AP.JobID = J.JobID;
+=============================================================================================================================
+20. List all combinations of applicants and companies where the company is in a specific city and the 
+    applicant has more than 2 years of experience. For example: city=Chennai.
+Ans:-
+
+SELECT 
+    A.FirstName, 
+    A.LastName, 
+    C.CompanyName
+FROM 
+    Applicants A
+CROSS JOIN 
+    Companies C
+WHERE 
+    A.City = 'Chicago'
+    AND A.YearsOfExperience > 2;
+================================================================================================================================
+
+                                                               *******THANK YOU*******
+
+
+
+
+
+
